@@ -1,0 +1,57 @@
+* {
+    font-family: Verdana;
+}
+
+table{
+    border-collapse: collapse;
+}
+
+td,
+th {
+border: 1px solid black;
+padding: 5px;
+text-align: center;
+font-size: 14px;
+}
+
+h1,
+h2 {
+text-align: center;
+font-size: 24px;
+}
+
+h1 {
+font-size: 36px;
+}
+
+.by-year{
+width: 100%;
+}
+
+.city-container{
+margin: auto;
+width: 90%;
+}
+
+.by-city{
+margin: 0;
+width: 49%;
+float: left;
+left: 0;
+}
+
+.by-cityyz{
+margin: 0;
+width: 49%;
+margin-left: auto;
+}
+
+thead{
+display: table-row-group;
+}
+/*
+.by-city{
+width: 20%;
+display: absolute;
+right: 0;
+}*/
