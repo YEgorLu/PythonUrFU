@@ -46,7 +46,7 @@ class Report:
 
         wk.create_sheet(title="Статистика по городам")
         ws = wk.worksheets[1]
-        header = (self.__second_table_header + tuple('') + self.__third_table_header)
+        header = (self.__second_table_header + tuple(' ') + self.__third_table_header)
         ws.append(header)
 
         table = [(self.__second_table[i] + tuple(" ") + self.__third_table[i]) for i in range(len(self.__third_table))]
