@@ -1,4 +1,5 @@
 import csv
+import os.path
 import re
 from typing import List, Dict, Callable, Iterable
 from itertools import groupby
@@ -93,6 +94,9 @@ class InputConnect:
             csv_generator = read_csv(self)
             next(csv_generator)
             prof_name = input('Введите название профессии: ')
+            wkhtml_path = input('Введите путь до wkghml.exe или пустую строку для стандартного пути: ')
+            wkhtml_path = os.path.abspath(
+                r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe' if wkhtml_path == "" else wkhtml_path)
             vacancies = [v for v in csv_generator]
             vacancies_with_prof = list(filter(lambda v: prof_name in v.name, vacancies))
             vacs_by_year = groupby(vacancies, lambda v: v.year)
@@ -108,8 +112,10 @@ class InputConnect:
             InputConnect.clear_by_city(salary_by_city, vacancies_by_city, len(vacancies))
 
             vacancies_by_city_to_print = {k: float('{:.4f}'.format(v)) for k, v in sorted(vacancies_by_city.items(),
-                                                                   key=lambda item: item[1], reverse=True)[:10]}
-            salary_by_city_to_print = {k: v for k, v in sorted(salary_by_city.items(), key=lambda item: item[1], reverse=True)[:10]}
+                                                                                          key=lambda item: item[1],
+                                                                                          reverse=True)[:10]}
+            salary_by_city_to_print = {k: v for k, v in
+                                       sorted(salary_by_city.items(), key=lambda item: item[1], reverse=True)[:10]}
 
             print('Динамика уровня зарплат по годам:', salary_by_year)
             print('Динамика количества вакансий по годам:', vacancies_by_year)
@@ -124,7 +130,7 @@ class InputConnect:
                                 profs_salary_by_year, professions_by_year, prof_name)
             rep.generate_excel()
             rep.generate_image()
-            rep.generate_pdf()
+            rep.generate_pdf(wkhtml_path)
 
         return inner
 

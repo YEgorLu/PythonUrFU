@@ -8,6 +8,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from matplotlib import pyplot as plt
 from jinja2 import Environment, FileSystemLoader
 import pdfkit
+import os.path as pth
 
 
 class Report:
@@ -34,7 +35,7 @@ class Report:
 
     def generate_excel(self):
         wk = Workbook()
-        dest_filename = 'report/report.xlsx'
+        dest_filename = pth.relpath(pth.join('report', 'report.xlsx'))
         ws = wk.worksheets[0]
         ws.title = "Статистика по годам"
         ws.append(self.__first_table_header)
@@ -56,21 +57,23 @@ class Report:
         self.__style_cells(ws)
         self.__style_header(ws)
 
-        wk.save(filename=dest_filename)
+        if check_file('xlsx', dest_filename):
+            wk.save(filename=dest_filename)
 
     def generate_image(self):
         self.__generate_salary_diagram()
         self.__generate_vacancy_diagram()
         self.__generate_hor()
         self.__generate_pie()
-        plt.savefig('report/graph.png')
+        save_path = pth.relpath(pth.join('report', 'graph.png'))
+        if check_file('png', save_path):
+            plt.savefig(save_path)
 
-    def generate_pdf(self):
+    def generate_pdf(self, wkhtml_path: str):
         env = Environment(loader=FileSystemLoader('.'))
-        template = env.get_template("template/template.html")
+        template = env.get_template('template/template.html')
 
         pdf_template = template.render({
-            'first': 'graph.png',
             'first_table': self.__first_table,
             'second_table': self.__second_table,
             'first_table_header': self.__first_table_header,
@@ -78,11 +81,15 @@ class Report:
             'third_table_header': self.__third_table_header,
             'third_table': list(
                 map(lambda tup: (tup[0], "{:.2f}%".format(tup[1] * 100).replace('.', ',')), self.__third_table)),
-            'prof_name': self.__prof_name
+            'prof_name': self.__prof_name,
+            'to_css': pth.abspath(pth.join('template', 'style.css')),
+            'to_img': pth.abspath(pth.join('report', 'graph.png'))
         })
-        config = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
-        pdfkit.from_string(pdf_template, 'report/report.pdf', configuration=config,
-                           options={"enable-local-file-access": ""})
+        config = pdfkit.configuration(wkhtmltopdf=wkhtml_path)
+        save_path = pth.normpath(pth.join('report', 'report.pdf'))
+        if check_file('pdf', save_path):
+            pdfkit.from_string(pdf_template, save_path, configuration=config,
+                               options={"enable-local-file-access": ""})
 
     def __generate_years_table(self) -> (Tuple[str, str, str, str, str], List[Tuple[int, int, int, int, int]]):
         fth = ('Год', 'Средняя зарплата', f'Средняя зарплата - {self.__prof_name}', 'Количество вакансий',
@@ -162,7 +169,7 @@ class Report:
         ax.set_xticks(list(map(lambda x: x + 0.15, y_pos)), labels=years, rotation="vertical", fontsize=8)
         for tick in ax.get_yticklabels():
             tick.set_fontsize(8)
-        ax.legend([overall, prof], [r'средняя з\п', r'з\п программист'], fontsize=8)
+        ax.legend([overall, prof], [r'средняя з\п', r'з\п ' + self.__prof_name], fontsize=8)
         ax.grid(axis='y')
 
     def __generate_vacancy_diagram(self):
@@ -176,6 +183,19 @@ class Report:
         ax.set_xticks(list(map(lambda x: x + 0.15, y_pos)), labels=years, rotation="vertical", fontsize=8)
         for tick in ax.get_yticklabels():
             tick.set_fontsize(8)
-        ax.legend([overall, prof], ['Количество вакансий', 'Количество ваканисий\n программист'], fontsize=8)
+        ax.legend([overall, prof], ['Количество вакансий', 'Количество ваканисий\n' + self.__prof_name], fontsize=8)
         ax.set_title('Количество вакансий по годам', fontsize=20)
         ax.grid(axis='y')
+
+
+
+def check_file(ext: str, dir_name: str) -> bool:
+    if not isinstance(dir_name, str):
+        raise TypeError('')
+    if not pth.basename(dir_name).endswith(f".{ext}"):
+        raise KeyError('')
+    if not pth.exists(pth.dirname(dir_name)):
+        raise FileNotFoundError('Папки не существует')
+    if pth.exists(dir_name):
+        raise FileExistsError(f'{dir_name} уже существует')
+    return True
